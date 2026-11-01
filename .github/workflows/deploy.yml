@@ -1,13 +1,70 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://htwrjzlrewrxeartslhi.supabase.co' }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_BEQbpUhu9Sw6akvVEb5CJQ_SRdmXi1a' }}
+      VITE_TG_CHANNEL: ${{ vars.VITE_TG_CHANNEL || 'https://t.me/CHNK_channel' }}
+      VITE_TG_BANK: ${{ vars.VITE_TG_BANK || 'https://t.me/Chnkbank' }}
+      VITE_TG_SUPPORT: ${{ vars.VITE_TG_SUPPORT || 'https://t.me/Chnk_mn' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
       - name: Build
         run: npm run build
 
       - name: Stage build
         run: |
-          mkdir -p .build
-          cp -r dist/. .build/
-          rm -rf dist
+          rm -rf "$RUNNER_TEMP/chnk-build"
+          mkdir -p "$RUNNER_TEMP/chnk-build"
+          cp -r dist/. "$RUNNER_TEMP/chnk-build/"
+          mkdir -p "$RUNNER_TEMP/chnk-build/images"
+          git show HEAD:dist/images/favicon.jpg > "$RUNNER_TEMP/chnk-build/images/favicon.jpg" 2>/dev/null || true
 
-      - name: Restore favicon
+      - name: Publish to gh-pages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          mkdir -p .build/images
-          git show HEAD:dist/images/favicon.jpg > .build/images/favicon.jpg || true
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git fetch origin gh-pages:gh-pages || true
+
+          if git rev-parse --verify gh-pages >/dev/null 2>&1; then
+            git checkout gh-pages
+            git reset --hard origin/gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf --cached . >/dev/null 2>&1 || true
+          fi
+
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          cp -r "$RUNNER_TEMP/chnk-build/." ./
+
+          git add -A
+          git commit -m "deploy: build $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "nothing to commit"
+          git push --force origin gh-pages
