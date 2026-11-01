@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Nav from './components/Nav'
 import Shop from './pages/Shop'
 import Profile from './pages/Profile'
 import Referrals from './pages/Referrals'
 import Tasks from './pages/Tasks'
 import Settings from './pages/Settings'
-import { useTelegramUser, useLang, useBalance } from './hooks/useApp'
+import { useTelegramUser, useLang, useBalance, useTheme } from './hooks/useApp'
 
 const TABS = [
   { id: 'shop', icon: '🎁', key: 'shop' },
@@ -20,12 +20,21 @@ export default function App() {
   const user = useTelegramUser()
   const [lang, setLang, t] = useLang()
   const balance = useBalance(user?.id)
+  const [theme, setTheme] = useTheme()
 
   const tabs = TABS.map(x => ({ ...x, label: t(x.key) }))
+
+  useEffect(() => {
+    const tg = window.Telegram?.WebApp
+    tg?.enableClosingConfirmation?.()
+    tg?.disableVerticalSwipes?.()
+    tg?.setHeaderColor?.(theme === 'dark' ? '#111d33' : '#ffffff')
+  }, [theme])
 
   if (!user) {
     return (
       <div className="chnk-gate">
+        <div className="chnk-top__logo">CHNK</div>
         <h1>CHNK</h1>
         <p>{t('openInTelegramHint')}</p>
       </div>
@@ -35,16 +44,19 @@ export default function App() {
   return (
     <div className="chnk-app">
       <header className="chnk-top">
-        <div className="chnk-top__bal">{balance.amount.toFixed(2)} TON</div>
-        <div className="chnk-top__name">{user.first_name}</div>
+        <div className="chnk-top__brand">
+          <div className="chnk-top__logo">CHNK</div>
+          <div className="chnk-top__name">{user.first_name}</div>
+        </div>
+        <div className="chnk-top__bal">💎 {balance.loading ? '…' : balance.amount.toFixed(2)} TON</div>
       </header>
 
       <main className="chnk-main">
-        {tab === 'shop' && <Shop user={user} t={t} balance={balance} />}
+        {tab === 'shop' && <Shop user={user} t={t} balance={balance} onGo={setTab} />}
         {tab === 'profile' && <Profile user={user} t={t} balance={balance} />}
         {tab === 'referrals' && <Referrals user={user} t={t} />}
         {tab === 'tasks' && <Tasks user={user} t={t} />}
-        {tab === 'settings' && <Settings t={t} lang={lang} setLang={setLang} />}
+        {tab === 'settings' && <Settings t={t} lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} />}
       </main>
 
       <Nav tabs={tabs} active={tab} onChange={setTab} />
