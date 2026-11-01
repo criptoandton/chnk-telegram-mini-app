@@ -2,6 +2,15 @@
 .chnk-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 @media (max-width:380px){.chnk-grid{grid-template-columns:1fr}}
 
+.chnk-top__right{display:flex;align-items:center;gap:8px}
+.chnk-theme-toggle{width:36px;height:36px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--txt);font-size:16px;cursor:pointer;font-family:inherit;
+  display:grid;place-items:center;flex:0 0 auto;
+  box-shadow:var(--shadow);
+  transition:transform .25s var(--ease),background-color .25s,border-color .25s}
+.chnk-theme-toggle:hover{border-color:var(--acc)}
+.chnk-theme-toggle:active{transform:scale(.9) rotate(-15deg)}
+
 .chnk-search{display:flex;align-items:center;gap:10px;padding:13px 16px;border-radius:16px;
   border:1px solid var(--line);background:var(--card);
   box-shadow:var(--shadow);
