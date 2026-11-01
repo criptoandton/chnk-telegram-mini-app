@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Card from '../components/Card'
 import GiftCard from '../components/GiftCard'
 import { fetchGifts, insertPurchase } from '../lib/gifts'
-import { COMMISSION_SELL_PERCENT } from '../lib/constants'
+import { COMMISSION_SELL_PERCENT, CHANNEL_URL } from '../lib/constants'
 import { checkPromo, redeemPromo, applyDiscount, normalizeCode } from '../lib/promo'
 
 const PROMO_KEYS = {
@@ -19,7 +19,7 @@ const PROMO_KEYS = {
 
 const CATS = ['Все', 'Классика', 'Редкие', 'Персонажи', 'Карты', 'Кошельки', 'Сезонные', 'Коллекционные']
 
-export default function Shop({ user, t, balance }) {
+export default function Shop({ user, t, balance, onGo }) {
   const [gifts, setGifts] = useState([])
   const [tab, setTab] = useState('nft')
   const [busy, setBusy] = useState(null)
@@ -54,8 +54,13 @@ export default function Shop({ user, t, balance }) {
     showToast._t = window.setTimeout(() => setToast(''), 2200)
   }
 
+  function haptic(kind = 'light') {
+    try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.(kind) } catch (e) { /* noop */ }
+  }
+
   function addToCart(gift) {
     setCart(prev => ({ ...prev, [gift.id]: (prev[gift.id] || 0) + 1 }))
+    haptic('light')
     showToast('+ ' + gift.name)
   }
 
@@ -67,6 +72,7 @@ export default function Shop({ user, t, balance }) {
       else next[gift.id] = v
       return next
     })
+    haptic('selection')
   }
 
   async function applyPromo() {
@@ -79,9 +85,11 @@ export default function Shop({ user, t, balance }) {
     if (!res.ok) {
       setPromo(null)
       setPromoError(t(PROMO_KEYS[res.reason] || 'promoError'))
+      haptic('error')
       return
     }
     setPromo(res.promo)
+    haptic('success')
     showToast('Промокод ' + res.promo.code + ' применён')
   }
 
@@ -104,6 +112,7 @@ export default function Shop({ user, t, balance }) {
           const msg = t(PROMO_KEYS[red.reason] || 'promoError')
           setPromoError(msg)
           showToast(msg)
+          haptic('error')
           return
         }
         usedPromo = red.promo
@@ -117,6 +126,7 @@ export default function Shop({ user, t, balance }) {
       setCart({})
       setPromo(null)
       setPromoInput('')
+      haptic('success')
       showToast(t('orderDone'))
     } catch (e) {
       showToast(t('orderFailed'))
@@ -127,6 +137,40 @@ export default function Shop({ user, t, balance }) {
 
   return (
     <>
+      <section className="chnk-hero">
+        <h2>{t('heroTitle')}</h2>
+        <p>{t('heroDesc')}</p>
+        <div className="chnk-hero__stats">
+          <div className="chnk-hero__stat">
+            <b>{balance.loading ? '…' : balance.amount.toFixed(2)}</b>
+            <span>TON на балансе</span>
+          </div>
+          <div className="chnk-hero__stat">
+            <b>{gifts.length}</b>
+            <span>подарков</span>
+          </div>
+          <div className="chnk-hero__stat">
+            <b>{COMMISSION_SELL_PERCENT}%</b>
+            <span>комиссия</span>
+          </div>
+        </div>
+      </section>
+
+      <div className="chnk-quick">
+        <button className="chnk-quick__item" onClick={() => { setTab('nft'); setCat('Все') }}>
+          <span className="chnk-quick__icon">🎁</span>
+          {t('shopNft')}
+        </button>
+        <button className="chnk-quick__item" onClick={() => onGo?.('tasks')}>
+          <span className="chnk-quick__icon">🎯</span>
+          {t('tasks')}
+        </button>
+        <button className="chnk-quick__item" onClick={() => onGo?.('referrals')}>
+          <span className="chnk-quick__icon">🎁</span>
+          {t('inviteFriend')}
+        </button>
+      </div>
+
       <div className="chnk-tabs">
         {['nft', 'channels', 'stars'].map(k => (
           <button
