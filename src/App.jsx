@@ -31,6 +31,11 @@ export default function App() {
     tg?.setHeaderColor?.(theme === 'dark' ? '#111d33' : '#ffffff')
   }, [theme])
 
+  function toggleTheme() {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+    try { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred?.('light') } catch (e) { /* noop */ }
+  }
+
   if (!user) {
     return (
       <div className="chnk-gate">
@@ -48,7 +53,17 @@ export default function App() {
           <div className="chnk-top__logo">CHNK</div>
           <div className="chnk-top__name">{user.first_name}</div>
         </div>
-        <div className="chnk-top__bal">💎 {balance.loading ? '…' : balance.amount.toFixed(2)} TON</div>
+        <div className="chnk-top__right">
+          <button
+            className="chnk-theme-toggle"
+            onClick={toggleTheme}
+            aria-label={t('theme')}
+            title={t('theme')}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+          <div className="chnk-top__bal">💎 {balance.loading ? '…' : balance.amount.toFixed(2)} TON</div>
+        </div>
       </header>
 
       <main className="chnk-main">
