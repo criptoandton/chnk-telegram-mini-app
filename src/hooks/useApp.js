@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { telegramUser, initTelegram } from '../lib/telegram'
 import { db } from '../lib/api'
 import { makeT } from '../lib/i18n'
+import { applyTheme, getStoredTheme, systemTheme } from '../lib/theme'
 
 export function useTelegramUser() {
   const [user, setUser] = useState(null)
@@ -17,6 +18,22 @@ export function useLang() {
   useEffect(() => { localStorage.setItem('chnk_lang', lang) }, [lang])
   const t = useCallback(makeT(lang), [lang])
   return [lang, setLang, t]
+}
+
+/** Theme state: stored choice wins, otherwise follow the system. */
+export function useTheme() {
+  const [theme, setThemeState] = useState(() => getStoredTheme() || systemTheme())
+
+  useEffect(() => {
+    applyTheme(theme)
+  }, [theme])
+
+  const setTheme = useCallback((next) => {
+    const applied = applyTheme(next)
+    setThemeState(applied)
+  }, [])
+
+  return [theme, setTheme]
 }
 
 export function useBalance(userId) {
