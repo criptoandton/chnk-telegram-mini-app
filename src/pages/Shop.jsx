@@ -17,7 +17,17 @@ const PROMO_KEYS = {
   error: 'promoError',
 }
 
-const CATS = ['Все', 'Классика', 'Редкие', 'Персонажи', 'Карты', 'Кошельки', 'Сезонные', 'Коллекционные']
+const CAT_KEYS = {
+  'Все': 'catAll',
+  'Классика': 'catClassic',
+  'Редкие': 'catRare',
+  'Персонажи': 'catCharacters',
+  'Карты': 'catCards',
+  'Кошельки': 'catWallets',
+  'Сезонные': 'catSeasonal',
+  'Коллекционные': 'catCollectible',
+}
+const CATS = Object.keys(CAT_KEYS)
 
 export default function Shop({ user, t, balance, onGo }) {
   const [gifts, setGifts] = useState([])
@@ -90,7 +100,7 @@ export default function Shop({ user, t, balance, onGo }) {
     }
     setPromo(res.promo)
     haptic('success')
-    showToast('Промокод ' + res.promo.code + ' применён')
+    showToast(t('promoAppliedToast', { code: res.promo.code }))
   }
 
   function removePromo() {
@@ -143,15 +153,15 @@ export default function Shop({ user, t, balance, onGo }) {
         <div className="chnk-hero__stats">
           <div className="chnk-hero__stat">
             <b>{balance.loading ? '…' : balance.amount.toFixed(2)}</b>
-            <span>TON на балансе</span>
+            <span>{t('heroBalance')}</span>
           </div>
           <div className="chnk-hero__stat">
             <b>{gifts.length}</b>
-            <span>подарков</span>
+            <span>{t('heroGifts')}</span>
           </div>
           <div className="chnk-hero__stat">
             <b>{COMMISSION_SELL_PERCENT}%</b>
-            <span>комиссия</span>
+            <span>{t('heroCommission')}</span>
           </div>
         </div>
       </section>
@@ -159,15 +169,15 @@ export default function Shop({ user, t, balance, onGo }) {
       <div className="chnk-quick">
         <button className="chnk-quick__item" onClick={() => { setTab('nft'); setCat('Все') }}>
           <span className="chnk-quick__icon">🎁</span>
-          {t('shopNft')}
+          {t('quickGifts')}
         </button>
         <button className="chnk-quick__item" onClick={() => onGo?.('tasks')}>
           <span className="chnk-quick__icon">🎯</span>
-          {t('tasks')}
+          {t('quickTasks')}
         </button>
         <button className="chnk-quick__item" onClick={() => onGo?.('referrals')}>
           <span className="chnk-quick__icon">🎁</span>
-          {t('inviteFriend')}
+          {t('quickInvite')}
         </button>
       </div>
 
@@ -201,7 +211,7 @@ export default function Shop({ user, t, balance, onGo }) {
                 className={'chnk-chip' + (cat === c ? ' is-active' : '')}
                 onClick={() => setCat(c)}
               >
-                {c}
+                {t(CAT_KEYS[c])}
               </button>
             ))}
           </div>
