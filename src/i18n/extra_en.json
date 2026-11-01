@@ -31,5 +31,15 @@
   "promoMinOrder": "Minimum order amount for this promo",
   "promoAlreadyUsed": "You already used this promo code",
   "promoNoDiscount": "No discount for this amount",
-  "promoError": "Could not verify promo code"
+  "promoError": "Could not verify promo code",
+  "heroTitle": "Telegram gifts for TON",
+  "heroDesc": "Collectible gifts at the best price. Pay in TON, delivered straight to your Telegram.",
+  "heroBalance": "TON balance",
+  "heroGifts": "gifts in catalog",
+  "heroCommission": "commission",
+  "quickGifts": "Gifts",
+  "quickTasks": "Tasks",
+  "quickInvite": "Invite",
+  "profileTitle": "My profile",
+  "themeApplied": "Theme applied"
 }
