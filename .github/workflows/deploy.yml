@@ -16,13 +16,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     env:
-      VITE_SUPABASE_URL: https://htwrjzlrewrxeartslhi.supabase.co
-      VITE_SUPABASE_ANON_KEY: sb_publishable_BEQbpUhu9Sw6akvVEb5CJQ_SRdmXi1a
-      VITE_TG_CHANNEL: https://t.me/CHNK_channel
-      VITE_TG_BANK: https://t.me/Chnkbank
-      VITE_TG_SUPPORT: https://t.me/Chnk_mn
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://htwrjzlrewrxeartslhi.supabase.co' }}
+      VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_BEQbpUhu9Sw6akvVEb5CJQ_SRdmXi1a' }}
+      VITE_TG_CHANNEL: ${{ vars.VITE_TG_CHANNEL || 'https://t.me/CHNK_channel' }}
+      VITE_TG_BANK: ${{ vars.VITE_TG_BANK || 'https://t.me/Chnkbank' }}
+      VITE_TG_SUPPORT: ${{ vars.VITE_TG_SUPPORT || 'https://t.me/Chnk_mn' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -43,13 +45,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout gh-pages || git checkout --orphan gh-pages
-          git reset --hard
-          rm -rf assets dist images index.html
-          cp -r dist/. .
-          rm -rf dist
+
+          # checkout full history so gh-pages exists locally
+          git fetch origin gh-pages:gh-pages || true
+
+          if git rev-parse --verify gh-pages >/dev/null 2>&1; then
+            git checkout gh-pages
+            git reset --hard origin/gh-pages
+          else
+            git checkout --orphan gh-pages
+            git rm -rf --cached . >/dev/null 2>&1 || true
+          fi
+
+          # wipe previous site content
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+
+          # copy fresh build
+          cp -r "$GITHUB_WORKSPACE/.build/." ./
+
           git add -A
-          git commit -m "deploy: build $(date +%s)" || echo "nothing to commit"
-          git push origin gh-pages
+          git commit -m "deploy: build $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "nothing to commit"
+          git push --force origin gh-pages
