@@ -17,7 +17,7 @@
   "subtotal": "Подытог",
   "discount": "Скидка",
   "total": "Итого",
-  "checkout": "Оменить заказ",
+  "checkout": "Оформить заказ",
   "open": "Открыть",
   "buy": "Купить",
   "promoPlaceholder": "Промокод",
@@ -31,5 +31,15 @@
   "promoMinOrder": "Минимальная сумма заказа для этого промокода",
   "promoAlreadyUsed": "Вы уже использовали этот промокод",
   "promoNoDiscount": "Промокод не даёт скидки на эту сумму",
-  "promoError": "Не удалось проверить промокод"
+  "promoError": "Не удалось проверить промокод",
+  "heroTitle": "Подарки Telegram за TON",
+  "heroDesc": "Коллекционные подарки по лучшей цене. Оплата в TON, доставка — сразу в твой Telegram.",
+  "heroBalance": "TON на балансе",
+  "heroGifts": "подарков в каталоге",
+  "heroCommission": "комиссия",
+  "quickGifts": "Подарки",
+  "quickTasks": "Задания",
+  "quickInvite": "Пригласить",
+  "profileTitle": "Мой профиль",
+  "themeApplied": "Тема применена"
 }
