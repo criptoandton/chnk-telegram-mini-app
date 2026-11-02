@@ -6,6 +6,7 @@ import Referrals from './pages/Referrals'
 import Tasks from './pages/Tasks'
 import Settings from './pages/Settings'
 import { useTelegramUser, useLang, useBalance, useTheme } from './hooks/useApp'
+import { themeColors } from './lib/theme'
 
 const TABS = [
   { id: 'shop', icon: '🎁', key: 'shop' },
@@ -28,7 +29,7 @@ export default function App() {
     const tg = window.Telegram?.WebApp
     tg?.enableClosingConfirmation?.()
     tg?.disableVerticalSwipes?.()
-    tg?.setHeaderColor?.(theme === 'dark' ? '#111d33' : '#ffffff')
+    tg?.setHeaderColor?.(themeColors(theme).card)
   }, [theme])
 
   function toggleTheme() {
