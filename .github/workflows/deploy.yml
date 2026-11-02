@@ -56,23 +56,15 @@ jobs:
           PUBLISH_DIR="$RUNNER_TEMP/chnk-publish"
           rm -rf "$PUBLISH_DIR"
           mkdir -p "$PUBLISH_DIR"
+          cp -r "$RUNNER_TEMP/chnk-build/." "$PUBLISH_DIR/"
 
-          # Fresh repo in an isolated folder: we never touch the checked-out
-          # working tree, so a dirty checkout cannot break the publish.
+          # Fresh repo in an isolated folder: the checked-out working tree is
+          # never touched, so a dirty checkout cannot break the publish.
           cd "$PUBLISH_DIR"
           git init -q
-          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git checkout -q --orphan gh-pages
-          cp -r "$RUNNER_TEMP/chnk-build/." .
-          rm -rf .git
-
-          git init -q
           git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -q --orphan gh-pages
           git add -A
           git commit -q -m "deploy: build $(date -u +%Y-%m-%dT%H:%M:%SZ)"
