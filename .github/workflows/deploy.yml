@@ -8,13 +8,15 @@ on:
 permissions:
   contents: write
 
+# One deploy at a time; a newer push supersedes an in-flight one.
 concurrency:
-  group: pages-deploy
+  group: chnk-deploy
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL || 'https://htwrjzlrewrxeartslhi.supabase.co' }}
       VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY || secrets.VITE_SUPABASE_ANON_KEY || 'sb_publishable_BEQbpUhu9Sw6akvVEb5CJQ_SRdmXi1a' }}
@@ -29,15 +31,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
       - name: Build
         run: npm run build
 
       - name: Stage build
         run: |
+          set -e
           rm -rf "$RUNNER_TEMP/chnk-build"
           mkdir -p "$RUNNER_TEMP/chnk-build"
           cp -r dist/. "$RUNNER_TEMP/chnk-build/"
@@ -48,23 +52,29 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -e
+          set -euo pipefail
+          PUBLISH_DIR="$RUNNER_TEMP/chnk-publish"
+          rm -rf "$PUBLISH_DIR"
+          mkdir -p "$PUBLISH_DIR"
+
+          # Fresh repo in an isolated folder: we never touch the checked-out
+          # working tree, so a dirty checkout cannot break the publish.
+          cd "$PUBLISH_DIR"
+          git init -q
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git fetch origin gh-pages:gh-pages || true
+          git checkout -q --orphan gh-pages
+          cp -r "$RUNNER_TEMP/chnk-build/." .
+          rm -rf .git
 
-          if git rev-parse --verify gh-pages >/dev/null 2>&1; then
-            git checkout gh-pages
-            git reset --hard origin/gh-pages
-          else
-            git checkout --orphan gh-pages
-            git rm -rf --cached . >/dev/null 2>&1 || true
-          fi
-
-          find . -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
-          cp -r "$RUNNER_TEMP/chnk-build/." ./
-
+          git init -q
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -q --orphan gh-pages
           git add -A
-          git commit -m "deploy: build $(date -u +%Y-%m-%dT%H:%M:%SZ)" || echo "nothing to commit"
-          git push --force origin gh-pages
+          git commit -q -m "deploy: build $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git push -q --force origin gh-pages
+          echo "published $(git rev-parse --short HEAD) to gh-pages"
